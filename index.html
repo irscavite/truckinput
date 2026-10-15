@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Truck Monitoring System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">TM</div>
+        <div>
+          <h1>Truck Monitoring</h1>
+          <p>Gate Movement System</p>
+        </div>
+      </div>
+
+      <nav>
+        <button class="nav-btn active" data-view="inView">
+          <span class="nav-icon">↘</span>
+          <span>Truck IN</span>
+        </button>
+        <button class="nav-btn" data-view="outView">
+          <span class="nav-icon">↗</span>
+          <span>Truck OUT</span>
+        </button>
+        <button class="nav-btn" data-view="historyView">
+          <span class="nav-icon">☷</span>
+          <span>Movement History</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="db-dot"></div>
+        <span id="dbStatus">Firebase Ready</span>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">EASTERN1961 PHILS. INC.</p>
+          <h2 id="pageTitle">Truck IN</h2>
+        </div>
+        <div class="live-clock">
+          <span id="currentDate"></span>
+          <strong id="currentTime"></strong>
+        </div>
+      </header>
+
+      <section id="inView" class="view active-view">
+        <div class="panel">
+          <div class="panel-heading">
+            <div>
+              <span class="badge badge-in">IN</span>
+              <h3>Truck Entry</h3>
+              <p>Record incoming truck details.</p>
+            </div>
+          </div>
+
+          <form id="inForm" class="form-grid" autocomplete="off">
+            <div class="field field-full">
+              <label for="inTrucking">Trucking</label>
+              <input id="inTrucking" type="text" placeholder="Enter trucking company" required />
+            </div>
+
+            <div class="field">
+              <label for="inPlate">Plate Number</label>
+              <div class="input-with-status">
+                <input id="inPlate" type="text" placeholder="Full plate or last 4 digits" required />
+                <span id="inPlateLookupStatus" class="lookup-status">Waiting</span>
+              </div>
+              <small id="inPlateHint" class="field-hint">Enter the last 4 digits to retrieve a saved truck.</small>
+              <div id="inYardAlert" class="yard-alert hidden"></div>
+            </div>
+
+            <div class="field">
+              <label>Time In</label>
+              <div class="timestamp-box" id="inTimestamp">Automatic timestamp</div>
+            </div>
+
+            <div class="field field-full">
+              <label>Bare Truck?</label>
+              <div class="choice-row">
+                <label class="choice-card">
+                  <input type="radio" name="inBare" value="yes" checked />
+                  <span>Yes — Bare</span>
+                </label>
+                <label class="choice-card">
+                  <input type="radio" name="inBare" value="no" />
+                  <span>No — With Container</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="field field-full hidden" id="inContainerWrap">
+              <label for="inContainer">Container Number</label>
+              <input id="inContainer" type="text" placeholder="e.g. TGHU1234567" />
+            </div>
+
+            <div class="field field-full">
+              <label class="pass-through-card" for="inPassThrough">
+                <input id="inPassThrough" type="checkbox" />
+                <span class="pass-through-check">✓</span>
+                <span class="pass-through-copy">
+                  <strong>Pass Through</strong>
+                  <small>Mark this truck as pass through. The status will also appear during Truck OUT.</small>
+                </span>
+              </label>
+            </div>
+
+            <div class="form-actions field-full">
+              <button type="reset" class="btn btn-secondary">Clear</button>
+              <button type="submit" class="btn btn-primary" id="saveInBtn">Save Truck IN</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section id="outView" class="view">
+        <div class="panel">
+          <div class="panel-heading">
+            <div>
+              <span class="badge badge-out">OUT</span>
+              <h3>Truck Exit</h3>
+              <p>Enter the full plate or just the last 4 digits to retrieve the active IN record.</p>
+            </div>
+          </div>
+
+          <form id="outForm" class="form-grid" autocomplete="off">
+            <div class="field field-full lookup-field">
+              <label for="outPlate">Plate Number</label>
+              <div class="input-with-status">
+                <input id="outPlate" type="text" placeholder="Full plate or last 4 digits" required />
+                <span id="plateLookupStatus" class="lookup-status">Waiting</span>
+              </div>
+            </div>
+              <div id="outYardAlert" class="yard-alert hidden"></div>
+
+            <div class="matched-card field-full hidden" id="matchedCard">
+              <div>
+                <span>Full Plate</span>
+                <strong id="matchedPlate">—</strong>
+              </div>
+              <div>
+                <span>Trucking</span>
+                <strong id="matchedTrucking">—</strong>
+              </div>
+              <div>
+                <span>Time IN</span>
+                <strong id="matchedTimeIn">—</strong>
+              </div>
+              <div id="matchedPassThroughWrap" class="pass-through-result hidden">
+                <span>Movement Type</span>
+                <strong id="matchedPassThrough">PASS THROUGH</strong>
+              </div>
+            </div>
+
+            <div class="field field-full">
+              <label>Bare Truck on OUT?</label>
+              <div class="choice-row">
+                <label class="choice-card">
+                  <input type="radio" name="outBare" value="yes" checked />
+                  <span>Yes — Bare</span>
+                </label>
+                <label class="choice-card">
+                  <input type="radio" name="outBare" value="no" />
+                  <span>No — With Container</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="field field-full hidden" id="outContainerWrap">
+              <label for="outContainer">Container Number</label>
+              <input id="outContainer" type="text" placeholder="e.g. TGHU1234567" />
+            </div>
+
+            <div class="field field-full">
+              <label>Time Out</label>
+              <div class="timestamp-box" id="outTimestamp">Automatic timestamp</div>
+            </div>
+
+            <div class="form-actions field-full">
+              <button type="reset" class="btn btn-secondary">Clear</button>
+              <button type="submit" class="btn btn-danger" id="saveOutBtn" disabled>Save Truck OUT</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section id="historyView" class="view">
+        <div class="panel panel-wide">
+          <div class="panel-heading history-heading">
+            <div>
+              <span class="badge badge-history">HISTORY</span>
+              <h3>Truck Movements</h3>
+              <p>Daily gate transactions only. Select a date to view older history.</p>
+            </div>
+            <button class="btn btn-secondary" id="refreshHistoryBtn">Refresh</button>
+          </div>
+
+          <div class="history-filter">
+            <div class="field">
+              <label for="historyDate">History Date</label>
+              <input id="historyDate" type="date" />
+            </div>
+            <div class="field history-search-field">
+              <label for="historyPlateSearch">Search Plate Number</label>
+              <div class="history-search-box">
+                <span class="history-search-icon">⌕</span>
+                <input id="historyPlateSearch" type="text" placeholder="Full plate or last 4 digits" autocomplete="off" />
+              </div>
+            </div>
+            <button class="btn btn-secondary" id="todayHistoryBtn" type="button">Today</button>
+          </div>
+
+          <div class="history-date-note" id="historyDateNote">Showing today's movements only.</div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span>Active Inside</span>
+              <strong id="activeCount">0</strong>
+            </div>
+            <div class="stat-card">
+              <span>Total Records</span>
+              <strong id="totalCount">0</strong>
+            </div>
+            <div class="stat-card">
+              <span>Completed OUT</span>
+              <strong id="completedCount">0</strong>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Movement</th>
+                  <th>Trucking</th>
+                  <th>Plate No.</th>
+                  <th>IN Load</th>
+                  <th>Time IN</th>
+                  <th>OUT Load</th>
+                  <th>Time OUT</th>
+                  <th>IN → OUT Interval</th>
+                </tr>
+              </thead>
+              <tbody id="historyBody">
+                <tr><td colspan="9" class="empty-row">No records loaded.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
